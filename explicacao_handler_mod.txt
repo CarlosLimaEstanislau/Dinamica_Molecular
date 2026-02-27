@@ -1,0 +1,85 @@
+Explicação Resumida e Conceitual do Código (handler_mod)
+
+Este módulo implementa toda a lógica de colisões, formação e dissociação
+de clusters, além dos propagadores utilizados em um integrador tipo
+Nosé-Hoover.
+
+Principais componentes:
+
+1.  Geração de números aleatórios
+
+-   gaussian_random: gera um número aleatório com distribuição normal
+    usando Box–Muller.
+-   random_unit_vector: gera um vetor unitário aleatório no espaço
+    tridimensional.
+
+2.  Funções matemáticas auxiliares
+
+-   exprel: calcula (1 - e^{-x})/x de forma numericamente estável para
+    pequenos x.
+-   Várias funções para cálculo de centro de massa (COM), velocidades
+    médias e propriedades agregadas de clusters.
+
+3.  Rotina principal de colisões: collision
+
+-   Varre todos os pares de partículas.
+-   Aplica condições de caixa periódica (PBC).
+-   Detecta se partículas estão na região de interação (“well”).
+-   Verifica se estão se aproximando e calcula energia relativa.
+-   Três possibilidades:
+    a)  colisão elástica normal,
+    b)  formação de cluster,
+    c)  dissociação de cluster.
+-   Integra consistentemente com massas e conservação de momento.
+-   A rotina NÃO atualiza velocidades de clusters globalmente pois isso
+    causaria conflito com o termostato Nosé-Hoover.
+
+4.  Formação de cluster: form_cluster
+
+-   Combina dois clusters quando a energia relativa é menor que a
+    energia de ligação.
+-   Mantém constantes as velocidades relativas internas para preservar
+    energia cinética interna.
+-   Recalcula COM e propriedades do cluster após a fusão.
+-   Implementa correções para garantir conservação de energia e momento.
+
+5.  Dissociação de cluster: dissociate_cluster
+
+-   Executada quando a energia da colisão é maior que a energia de
+    dissociação.
+-   Determina quantas partículas podem ser removidas com a energia
+    disponível.
+-   Ejeção é feita numa direção geométrica baseada na colisão, ou
+    aleatória se degenerada.
+-   As partículas dissociadas formam novos clusters individuais.
+-   O cluster restante tem suas velocidades ajustadas para preservar
+    conservação de momento total.
+-   Valida conservação de energia (cinética + energia de ligação
+    liberada).
+
+6.  Funções auxiliares de clusters
+
+-   calculate_cluster_com_velocity: calcula velocidade do COM e massa
+    total.
+-   calculate_cluster_com_properties: usado na dissociação.
+-   calculate_cluster_properties: recalcula COM e velocidade média após
+    mudanças estruturais.
+-   adjust_remaining_cluster_velocity: corrige velocidades do cluster
+    remanescente após ejeção.
+
+7.  Propagadores do integrador (Nosé-Hoover)
+
+-   u1_propagator: atualiza posições com PBC.
+-   u2_propagator: meio passo de atualização de velocidades com forças.
+-   u3_propagator: propaga velocidades pelo acoplamento com a variável
+    do termostato.
+-   u4_propagator: atualiza momento do termostato segundo cadeia de
+    Nosé–Hoover.
+
+Resumo conceitual: O módulo implementa um modelo de dinâmica molecular
+com partículas que podem se agrupar em clusters e se separar dependendo
+da energia das colisões. As colisões são tratadas analiticamente no eixo
+da interação. A fusão e dissociação respeitam conservação de energia e
+momento e incluem correções numéricas importantes para estabilidade.
+Além disso, o módulo contém os propagadores necessários para acoplamento
+com um termostato Nosé–Hoover, permitindo simulações em ensemble NVT.
