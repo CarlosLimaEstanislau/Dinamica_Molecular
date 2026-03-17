@@ -1,0 +1,26 @@
+# Pastas geradas pela simulação
+build/
+config/
+pdb/
+
+# Arquivos de saída comuns
+*.out
+*.dat
+*.log
+
+# Executáveis
+*.exe
+*.x
+a.out
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Arquivos de compilação Fortran
+*.o
+*.mod
+
+# Editor (opcional)
+*~
+*.swp
