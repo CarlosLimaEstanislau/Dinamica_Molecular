@@ -16,6 +16,8 @@ program simulation
     integer  :: step
     real(dp) :: kinetic, temp
 
+    call random_seed()
+
     call init_params(params)
     call get_command_argument(1, params%outdir)
 
@@ -27,7 +29,10 @@ program simulation
     call read_init_config(sys, part, params)
     call initialize(sys, params, part, dt)
 
-    call DLVO(part%charges, part%positions, sys%box, part%radius, kappa, sys%force_DLVO, sys%pot_DLVO)
+    call shuffle_array(part%radius)
+    call shuffle_array(part%charges)
+
+    call DLVO(part%charges, part%positions, sys%box, part%radius, a0, sys%kappa, sys%force_DLVO, sys%pot_DLVO)
     call WCA(part%positions, sys%box, part%radius, eps, sys%force_WCA, sys%pot_WCA)
 
     sys%total_forces =  sys%force_WCA + sys%force_DLVO
@@ -35,18 +40,18 @@ program simulation
     
     do step = 1, params%max_steps
         
-        call u2_propagator(dt/2.0_dp, part%velocities, sys%total_forces)
+        call u2_propagator(dt/2.0_dp, part%velocities, sys%total_forces, part%masses)
         call langevin_step(dt/2.0_dp, part%velocities, part%masses, params%gamma, sys%temp_target)
         call u1_propagator(dt, part%positions, part%velocities, sys%box)
         
-        call DLVO(part%charges, part%positions, sys%box, part%radius, kappa, sys%force_DLVO, sys%pot_DLVO)
+        call DLVO(part%charges, part%positions, sys%box, part%radius, a0, sys%kappa, sys%force_DLVO, sys%pot_DLVO)
         call WCA(part%positions, sys%box, part%radius, eps, sys%force_WCA, sys%pot_WCA)
 
         sys%total_forces =  sys%force_WCA + sys%force_DLVO
         sys%total_potential =  sys%pot_WCA + sys%pot_DLVO 
         
         call langevin_step(dt/2.0_dp, part%velocities, part%masses, params%gamma, sys%temp_target)
-        call u2_propagator(dt/2.0_dp, part%velocities, sys%total_forces)
+        call u2_propagator(dt/2.0_dp, part%velocities, sys%total_forces, part%masses)
             
     	kinetic = 0.5_dp*sum(part%masses*sum(part%velocities**2, dim = 1))  
         sys%total_energy  = kinetic + sys%total_potential 

@@ -124,8 +124,8 @@ module io_mod
         
         do i=1, sys%num_particles
             
-            if (part%radius(i) .eq. part%radius1) ir = 0
-            if (part%radius(i) .eq. part%radius2) ir = 2
+            if (abs(part%radius(i) - part%radius1/a0) < 1.0e-12_dp) ir = 0
+            if (abs(part%radius(i) - part%radius2/a0) < 1.0e-12_dp) ir = 2
             if (part%charges(i) .eq. part%Z) ic = 1
             if (part%charges(i) .eq. -part%Z) ic = 2
             

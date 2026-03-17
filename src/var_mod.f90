@@ -12,10 +12,11 @@ module var_mod
     use, intrinsic :: iso_fortran_env, only: dp => real64
     implicit none
 
-    real(dp), parameter :: kappa = 0.0279_dp ! Screening lengh
-    real(dp), parameter :: eps = 1000.0_dp     ! WCA strength
+    real(dp), parameter :: kappa = 2.79_dp     ! Screening lengh (micrometro^-1)
+    real(dp), parameter :: eps = 50.0_dp       ! WCA strength ()
     real(dp), parameter :: dt = 0.001_dp       ! Integration step
     real(dp), parameter :: pi = acos(-1.0_dp)  ! pi constant
+    real(dp), parameter :: a0 = 0.53_dp        ! Reference radii (micrometro)
 
     type :: system_g
         real(dp) :: box, total_energy, temp_target
@@ -24,6 +25,7 @@ module var_mod
         real(dp), dimension(:,:), allocatable :: total_forces, force_DLVO, force_WCA !(3,n)
         integer :: num_particles
         real(dp):: rho, frac_particles,frac_charges
+        real(dp):: kappa                                                             ! Screening lengh (micrometro^-1)
     end type system_g
 
     type :: particles
@@ -58,28 +60,20 @@ module var_mod
             params%gamma = 2.0_dp 
         end subroutine
 
-        subroutine init_basic(part, sys)
-            implicit none
-            
-            type(particles), intent(inout):: part
-            type(system_g), intent(in):: sys
-            
-            allocate(part%positions(3, sys%num_particles))
-            allocate(part%velocities(3, sys%num_particles))
-            part%positions = 0.0_dp
-            part%velocities = 0.0_dp
-        end subroutine
-
         subroutine init_particles(part, sys)
             implicit none
             type(particles), intent(inout):: part
             type(system_g), intent(in):: sys
             integer:: num_radius, num_charges
 
-            call init_basic(part,sys)
+            allocate(part%positions(3, sys%num_particles))
+            allocate(part%velocities(3, sys%num_particles))
             allocate(part%masses(sys%num_particles))
             allocate(part%charges(sys%num_particles))
             allocate(part%radius(sys%num_particles))
+
+            part%positions = 0.0_dp
+            part%velocities = 0.0_dp
             
             part%charges = 0.0_dp
             part%radius  = 0.0_dp
@@ -98,19 +92,15 @@ module var_mod
                 error stop "Erro: Atribua um valor para fração de cargas entre 1 e 0!"
             end if
 
-            if(num_radius .eq. sys%num_particles) then
-                part%radius(1:num_radius) = part%radius1
-            else
-                part%radius(1:num_radius) = part%radius1
-                part%radius(num_radius+1:sys%num_particles) = part%radius2 
+            part%radius = part%radius1/a0
+            if (num_radius < sys%num_particles) then
+                part%radius(num_radius+1:) = part%radius2/a0
             end if
             
-            if(num_charges .eq. sys%num_particles) then
-                part%charges(1:num_charges) = part%Z
-            else
-                part%charges(1:num_charges) = part%Z
-                part%charges(num_charges+1:sys%num_particles) = -part%Z
-            end if   
+            part%charges = part%Z
+            if (num_charges < sys%num_particles) then
+                part%charges(num_charges+1:) = -part%Z
+            end if
 
         end subroutine
 
@@ -136,12 +126,13 @@ module var_mod
             implicit none
             type(system_g), intent(inout) :: sys
 
-            sys%g = 3*sys%num_particles
+            sys%g = 3*(sys%num_particles-1)
             sys%total_energy = 0.0_dp
             sys%temp_target = 1.0_dp
             sys%pot_WCA = 0.0_dp
             sys%pot_DLVO = 0.0_dp
             sys%total_potential = 0.0_dp
+            sys%kappa = kappa*a0 
 
             allocate(sys%total_forces(3, sys%num_particles))
             allocate(sys%force_DLVO(3, sys%num_particles))

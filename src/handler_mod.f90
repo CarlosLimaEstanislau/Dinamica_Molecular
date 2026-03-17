@@ -74,51 +74,22 @@ module handler_mod
             end do
         end subroutine random_normals
 
-        subroutine collision_hard(positions, velocities, radius, masses, box)
+        subroutine shuffle_array(arr)
             implicit none
-            real(dp), dimension(:,:), intent(inout) :: positions, velocities
-            real(dp), dimension(:), intent(in) :: masses, radius
-            real(dp), intent(in) :: box
-            real(dp), parameter :: tiny = 1.0e-12_dp
-            real(dp), dimension(3) :: rij_hat, rij, vij
-            real(dp) :: coeff_i, coeff_j, overlap
-            real(dp) ::rij_norm, vij_rel, delta
-
-            integer :: n, i, j
-
-            n = size(positions,2)
-
-            do i = 1, n-1
-                do j = i+1, n
-                    delta = radius(i) + radius(j)
-                    
-                    rij = positions(:,i) - positions(:,j)
-                    rij = rij - box * nint(rij / box)
-                    rij_norm = sqrt(dot_product(rij, rij))
-                    rij_hat = rij / rij_norm
-
-                    vij = velocities(:,i) - velocities(:,j)
-                    vij_rel = dot_product(vij, rij_hat)
-                    
-                    if (rij_norm < tiny) cycle     
-
-                    if (rij_norm < delta .and. vij_rel < 0.0_dp) then
-
-                        coeff_i = 2.0_dp * masses(j) / (masses(i) + masses(j)) * vij_rel
-                        coeff_j = 2.0_dp * masses(i) / (masses(i) + masses(j)) * vij_rel    
-                        
-                        overlap = delta - rij_norm
-
-                        positions(:,i) = positions(:,i) - 0.5_dp*overlap * rij_hat
-                        positions(:,j) = positions(:,j) + 0.5_dp*overlap * rij_hat
-
-                        velocities(:,i) = velocities(:,i) - coeff_i * rij_hat
-                        velocities(:,j) = velocities(:,j) + coeff_j * rij_hat
-                    end if
-                end do
+            real(dp), intent(inout) :: arr(:)
+            integer :: i, j, n
+            real(dp) :: r, temp
+            
+            n = size(arr)
+            
+            do i = n, 2, -1
+                call random_number(r)
+                j = floor(r * i) + 1
+                temp = arr(i)
+                arr(i) = arr(j)
+                arr(j) = temp
             end do
-
-        end subroutine collision_hard
+        end subroutine shuffle_array
 
     !----------Integradores--------------------------------------------!
 
@@ -130,17 +101,18 @@ module handler_mod
             r(:,:) = r(:,:) - box * nint(r(:,:)/box)
         end subroutine u1_propagator
 
-        subroutine u2_propagator(t, velocities, forces)
+        subroutine u2_propagator(t, velocities, forces, masses)
             implicit none
             real(dp), intent(in)                    :: t
             real(dp), dimension(:,:), intent(inout) :: velocities
             real(dp), dimension(:,:), intent(in)    :: forces
+            real(dp), dimension(:), intent(in)      :: masses
             
             integer :: i, n
             
             n = size(velocities,2) 
             do i = 1, n
-                velocities(:,i) = velocities(:,i) + t * forces(:,i)
+                velocities(:,i) = velocities(:,i) + t * (forces(:,i)/masses(i))
             end do
         end subroutine u2_propagator
         
