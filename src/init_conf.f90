@@ -15,17 +15,18 @@ program init_conf
     call read_nml(sys, part, params)
 
     call init_system(sys)
-    call init_particles(part, sys)
-    call last_config(sys, part, params%outdir, params%exists)
+    call alloc_particles(part, sys)
+    call set_particles(part, sys)
+    !call last_config(sys, part, params%outdir, params%exists)
 
 
-    if(params%exists) then
-        call continue_config(sys, part, params%outdir)
-    else
+    !if(params%exists) then
+       ! call continue_config(sys, part, params%outdir)
+    !else
         call new_config(part, sys, params)
-    end if
+    !end if
 
-    call end_basic(part)
+    call dealloc_particles(part)
     call end_system(sys)
 
     contains
@@ -152,20 +153,8 @@ program init_conf
         call lattice_positions(part%positions, sys%box, sys%num_particles, part%radius)
         call rand_velocities(part%velocities, sigma, sys%num_particles)
         
-        open(newunit = fdi, file = params%filename, status = 'replace', iostat = ioerr)
-        
-        if(ioerr /= 0) then
-            write(*,*) 'Error opening: ', params%filename, 'IOSTAT= ', ioerr
-            stop 'Error in write initial configuration!'
-        end if
-        
-        write(fdi,'(ES25.16)') sys%box
-        
-        do i = 1, sys%num_particles
-            write(fdi,'(6ES25.16)') part%positions(:,i), part%velocities(:,i)
-        end do
-
-        close(fdi)
+        call write_config(part, sys, params%init_filename)
+        call write_part_file(part, sys, params%part_filename)
     end subroutine new_config
 
     subroutine continue_config(sys, part, outdir)
