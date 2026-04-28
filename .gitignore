@@ -24,3 +24,4 @@ a.out
 # Editor (opcional)
 *~
 *.swp
+log/
