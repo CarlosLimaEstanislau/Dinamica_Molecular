@@ -10,12 +10,18 @@ FLAGS="-O2"
 
 SRC_DIR="src"
 BUILD_DIR="build"
+CONFIG_DIR="config"
+PDB_DIR="pdb"
+LOG_DIR="log"
+
 MODULOS=(
+  "rng_mod.f90"
   "var_mod.f90"
   "io_mod.f90"
-  "handler_mod.f90"
+  "utils_mod.f90"
   "forces_mod.f90"
   "ui_mod.f90"
+  
 )
 
 PROGRAMAS=("init_conf.f90" "main.f90")
@@ -25,6 +31,9 @@ MASTER_DIR="$(pwd)"
 
 # Criar diretório build se não existir
 mkdir -p "$BUILD_DIR"
+mkdir -p "$PDB_DIR"
+mkdir -p "$CONFIG_DIR"
+mkdir -p "$LOG_DIR"
 
 altera_nml() {
     param="$1"
