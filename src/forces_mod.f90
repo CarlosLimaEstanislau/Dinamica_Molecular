@@ -3,7 +3,7 @@
         implicit none
 
         contains
-            subroutine forces(positions, box, radius, charges, epsilon, bjl, kappa,r_cut_dlvo, list, point, force, potential)
+            subroutine forces(positions, box, radius, charges, epsilon, bjl, kappa, r_cut_dlvo, list, point, force, potential)
                 implicit none
 
                 real(dp), dimension(:,:), intent(in) :: positions
@@ -16,7 +16,7 @@
                 real(dp), dimension(3) :: rij
                 integer :: i, j, n, k
                 real(dp) :: rc, rc2, sigma, a1, a2, r2, r
-                real(dp) :: Bi, Bj, A
+                real(dp) :: Bi, Bj, A, surf_dist
                 real(dp) :: expfac, force_scalar_dlvo, pot_dlvo
                 real(dp) :: sr2, sr6, sr12, force_scalar_wca, pot_wca
 
@@ -38,11 +38,10 @@
                         sigma = radius(i) + radius(j)
                         a1 = radius(i)
                         a2 = radius(j)
-
-                        rc = 2.0_dp**(1.0_dp/6.0_dp) * sigma
-                        rc2 = rc * rc 
                         
-                        if (r2 > rc2 .and. r2 <= r_cut_dlvo*r_cut_dlvo) then
+                        surf_dist = r - sigma
+                        
+                        if (surf_dist > 0.0_dp .and. surf_dist <= r_cut_dlvo) then
                             Bi = exp(kappa * a1) / (1.0_dp + kappa * a1)
                             Bj = exp(kappa * a2) / (1.0_dp + kappa * a2)
                             A = charges(i) * charges(j) * Bi * Bj * bjl
@@ -56,7 +55,7 @@
                             force(:,j) = force(:,j) - force_scalar_dlvo * rij
                         end if
 
-                        if (r <= rc) then
+                        if (r < sigma) then
                             sr2 = (sigma * sigma) / r2
                             sr6 = sr2 * sr2 * sr2
                             sr12 = sr6 * sr6
@@ -102,7 +101,7 @@
                         if (rij2 <= r_list2) then
                             k = k + 1
                             if (k > size(list)) then
-                                stop "Erro: lista de Verlet pequena demais"
+                                stop "Erro: The Verlet list is too short!"
                             end if
                             list(k) = j
                         end if

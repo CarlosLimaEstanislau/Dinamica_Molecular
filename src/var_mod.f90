@@ -31,7 +31,7 @@ module var_mod
         integer :: n, max_pairs
         integer :: num_particles
         real(dp):: rho, frac_particles,frac_charges
-        real(dp):: kappa, bjerrum                                                          
+        real(dp):: kappa, bjerrum, max_radius                                                         
     end type system_g
 
     type :: particles
@@ -130,6 +130,22 @@ module var_mod
             if(allocated(part%radius)) deallocate(part%radius)
         end subroutine 
 
+        subroutine init_verlet_list(sys, part)
+            implicit none
+            type(system_g), intent(inout) :: sys
+            type(particles), intent(in)   :: part
+            
+            sys%max_radius = maxval(part%radius)
+            sys%skin = 0.2_dp * sys%r_cut_dlvo
+            sys%r_list = sys%r_cut_dlvo + sys%skin + 2.0_dp * sys%max_radius
+            sys%max_pairs = sys%num_particles * (sys%num_particles - 1) / 2
+
+            allocate(sys%list(sys%max_pairs))
+            allocate(sys%point(sys%num_particles +1))
+            allocate(sys%r_save(3,sys%num_particles ))
+
+        end subroutine init_verlet_list
+
         subroutine init_system(sys)
             implicit none
             type(system_g), intent(inout) :: sys
@@ -143,16 +159,11 @@ module var_mod
             sys%kappa = kappa*a0 
             sys%bjerrum = bjerrum/a0
             sys%r_cut_dlvo = 5.0_dp / sys%kappa
-            sys%skin = 0.3_dp
-            sys%r_list = sys%r_cut_dlvo + sys%skin
-            sys%max_pairs = sys%num_particles * (sys%num_particles - 1) / 2
 
             allocate(sys%total_forces(3, sys%num_particles))
             allocate(sys%force_DLVO(3, sys%num_particles))
             allocate(sys%force_WCA(3, sys%num_particles))
-            allocate(sys%list(sys%max_pairs))
-            allocate(sys%point(sys%num_particles +1))
-            allocate(sys%r_save(3,sys%num_particles ))
+
             sys%total_forces = 0.0_dp
             sys%force_DLVO = 0.0_dp
             sys%force_WCA = 0.0_dp
