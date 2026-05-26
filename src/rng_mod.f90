@@ -35,19 +35,23 @@ module rng_mod
 	        end if
 	    end function random_normal
 
-	    subroutine shuffle_array(arr)
+	    subroutine shuffle_array(arr1, arr2)
 	        implicit none
-	        real(dp), intent(inout) :: arr(:)
+	        real(dp), dimension(:), intent(inout) :: arr1, arr2
 	        integer :: i, j
-	        real(dp) :: rtmp, temp
+	        real(dp) :: rtmp, temp1, temp2
 
-	        do i = size(arr), 2, -1
+	        do i = size(arr1), 2, -1
 	            call random_number(rtmp)
 	            j = int(rtmp * i) + 1
 
-	            temp   = arr(i)
-	            arr(i) = arr(j)
-	            arr(j) = temp
+	            temp1   = arr1(i)
+	            arr1(i) = arr1(j)
+	            arr1(j) = temp1
+
+	           	temp2   = arr2(i)
+	            arr2(i) = arr2(j)
+	            arr2(j) = temp2
 	        end do
 	    end subroutine shuffle_array
 end module rng_mod

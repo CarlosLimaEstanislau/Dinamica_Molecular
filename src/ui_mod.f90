@@ -29,7 +29,7 @@ module ui_mod
         write(*,'(A,F10.4)')     ' Frac. radii type A: ', sys%frac_particles
         write(*,'(A,F10.4)')     ' Frac. charged:      ', sys%frac_charges
         write(*,'(A,F10.4)')     ' Charge magnitude Z: ', part%Z
-        write(*,'(A,F10.4)')     ' Langevin gamma:     ', params%gamma
+        write(*,'(A,F10.4)')     ' Langevin gamma:     ', sys%gamma
 
         print *
         print *, '-----------------------------------------------------'

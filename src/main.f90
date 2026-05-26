@@ -55,14 +55,14 @@ program simulation
         end if
 
         call u2_propagator(dt/2.0_dp, part%velocities, sys%total_forces, part%masses)
-        call langevin_step(dt/2.0_dp, part%velocities, part%masses, params%gamma, sys%temp_target)
+        call langevin_step(dt/2.0_dp, part%velocities, part%masses, sys%gamma, sys%temp_target)
         call u1_propagator(dt, part%positions, part%velocities, sys%box)
 
         call forces(part%positions, sys%box, part%radius, part%charges, &
             eps, sys%bjerrum, sys%kappa, sys%r_cut_dlvo, &
             sys%list, sys%point, sys%total_forces, sys%total_potential)
 
-        call langevin_step(dt/2.0_dp, part%velocities, part%masses, params%gamma, sys%temp_target)
+        call langevin_step(dt/2.0_dp, part%velocities, part%masses, sys%gamma, sys%temp_target)
         call u2_propagator(dt/2.0_dp, part%velocities, sys%total_forces, part%masses)
 
         if (.not. all(part%velocities == part%velocities)) error stop "NaN detectado"

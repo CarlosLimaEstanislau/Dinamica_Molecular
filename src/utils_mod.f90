@@ -144,5 +144,4 @@ contains
             end do
         end do
     end subroutine validate_configuration
-
 end module utils_mod

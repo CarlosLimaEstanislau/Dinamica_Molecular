@@ -31,7 +31,8 @@ module var_mod
         integer :: n, max_pairs
         integer :: num_particles
         real(dp):: rho, frac_particles,frac_charges
-        real(dp):: kappa, bjerrum, max_radius                                                         
+        real(dp):: kappa, bjerrum, max_radius
+        real(dp):: gamma                                                         
     end type system_g
 
     type :: particles
@@ -47,7 +48,6 @@ module var_mod
         logical :: is_first
         logical :: interrupt
         logical :: exists 
-        real(dp):: gamma
     end type parameters 
 
     contains
@@ -62,7 +62,6 @@ module var_mod
             params%is_first = .true.
             params%interrupt = .false.
             params%exists = .false.
-            params%gamma = 2.0_dp 
         end subroutine
 
         subroutine alloc_particles(part, sys)
@@ -100,7 +99,7 @@ module var_mod
             end if
             
             if (sys%frac_charges .le. 1.0_dp .and. sys%frac_charges .ge. 0.0_dp) then 
-                num_charges = nint(sys%frac_charges   * sys%num_particles)
+                num_charges = nint(sys%frac_charges * sys%num_particles)
             else 
                 error stop "Erro: Atribua um valor para fração de cargas entre 0 e 1!"
             end if
@@ -115,8 +114,9 @@ module var_mod
                 part%charges(num_charges+1:) = -part%Z
             end if
 
-            call shuffle_array(part%radius)
-            call shuffle_array(part%charges)
+            call shuffle_array(part%radius, part%charges)
+            !call shuffle_array(part%radius)
+            !call shuffle_array(part%charges)
         end subroutine set_particles
 
         subroutine dealloc_particles(part)

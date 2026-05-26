@@ -21,10 +21,10 @@ contains
 
         integer  :: num_particles, max_steps
         real(dp) :: rho, frac_particles, frac_charges
-        real(dp) :: radius1, radius2, Z
+        real(dp) :: radius1, radius2, Z, gamma
 
         namelist /config_nml/ num_particles, max_steps, rho, frac_particles, &
-                              frac_charges, radius1, radius2, Z
+                              frac_charges, radius1, radius2, Z, gamma
 
         ! Defaults
         num_particles  = 100
@@ -35,6 +35,7 @@ contains
         radius1        = 0.5_dp
         radius2        = 0.0_dp
         Z              = 100.0_dp
+        gamma = 1.0_dp
 
         open(newunit=unit, file=params%file_nml, status='old', action='read', iostat=ios)
         if (ios /= 0) then
@@ -77,10 +78,12 @@ contains
         sys%rho            = rho
         sys%frac_particles = frac_particles
         sys%frac_charges   = frac_charges
+        sys%gamma          = gamma
 
         part%radius1 = radius1
         part%radius2 = radius2
         part%Z       = Z
+
 
         params%max_steps = max_steps
     end subroutine read_nml
@@ -269,7 +272,7 @@ contains
         integer :: i, fdi, ios, idx, ir, ic
         real(dp), parameter :: tol = 1.0e-10_dp
         character(len=512) :: filepath
-        character(len=2), parameter :: labelP(4) = ['C ', 'H ', 'N ', 'O ']
+        character(len=2), parameter :: labelP(2) = ['C ', 'H ']
 
         if (.not. allocated(part%positions)) error stop 'write_pdb: positions nao alocado'
         if (.not. allocated(part%radius))    error stop 'write_pdb: radius nao alocado'
@@ -288,24 +291,14 @@ contains
         write(fdi,'(A6,3F9.3,3F7.2)') 'CRYST1', sys%box, sys%box, sys%box, 90.0, 90.0, 90.0
 
         do i = 1, sys%num_particles
-            ir = -1
-            ic = -1
-
-            if (abs(part%radius(i)  - part%radius1/a0) < tol) ir = 0
-            if (abs(part%radius(i)  - part%radius2/a0) < tol) ir = 2
-            if (abs(part%charges(i) - part%Z)          < tol) ic = 1
-            if (abs(part%charges(i) + part%Z)          < tol) ic = 2
-
-            if (ir < 0 .or. ic < 0) then
+            if (abs(part%radius(i) - part%radius1/a0) < tol) then
+                idx = 1
+            else if (abs(part%radius(i) - part%radius2/a0) < tol) then
+                idx = 2
+            else
                 close(fdi)
-                write(*,*) 'Particula nao identificada no PDB: ', i
+                write(*,*) 'Particula com raio nao identificado: i=', i, ' raio=', part%radius(i)
                 error stop 'write_pdb: classificacao de particula falhou'
-            end if
-
-            idx = ir + ic
-            if (idx < 1 .or. idx > size(labelP)) then
-                close(fdi)
-                error stop 'write_pdb: indice de rotulo invalido'
             end if
 
             write(fdi,'(A6,I5,1X,A4,1X,A3,1X,I4,4X,3F8.3,2F6.2,10X,A2)') &
