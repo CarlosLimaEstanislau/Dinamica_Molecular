@@ -115,8 +115,6 @@ module var_mod
             end if
 
             call shuffle_array(part%radius, part%charges)
-            !call shuffle_array(part%radius)
-            !call shuffle_array(part%charges)
         end subroutine set_particles
 
         subroutine dealloc_particles(part)

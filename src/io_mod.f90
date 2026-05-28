@@ -291,9 +291,9 @@ contains
         write(fdi,'(A6,3F9.3,3F7.2)') 'CRYST1', sys%box, sys%box, sys%box, 90.0, 90.0, 90.0
 
         do i = 1, sys%num_particles
-            if (abs(part%radius(i) - part%radius1/a0) < tol) then
+            if (part%charges(i) == -part%Z) then
                 idx = 1
-            else if (abs(part%radius(i) - part%radius2/a0) < tol) then
+            else if (part%charges(i) == part%Z) then
                 idx = 2
             else
                 close(fdi)
