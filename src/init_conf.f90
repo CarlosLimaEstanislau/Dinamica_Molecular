@@ -48,8 +48,8 @@ program init_conf
         real(dp), parameter                    :: perturb_frac = 0.2_dp
 
         n_side = ceiling(n**(1.0_dp/3.0_dp))
-        space = box / real(n_side, dp)
-        shift = -box / 2.0_dp
+        !space = box / real(n_side, dp)
+        !shift = -box / 2.0_dp
         
         p = 0
 
@@ -65,12 +65,14 @@ program init_conf
                     do while (overlap .and. attempt < max_attempts)
                         attempt = attempt + 1
                         
-                        call random_number(delta)
-                        delta = (delta - 0.5_dp) * 2.0_dp * perturb_frac * space
+                        call random_number(pos_tent)
+
+                        pos_tent = (pos_tent - 0.5) * box
+                        !delta = (delta - 0.5_dp) * 2.0_dp * perturb_frac * space
                         
-                        pos_tent(1) = shift + (i + 0.5_dp) * space + delta(1)
-                        pos_tent(2) = shift + (j + 0.5_dp) * space + delta(2)
-                        pos_tent(3) = shift + (k + 0.5_dp) * space + delta(3)
+                        !pos_tent(1) = shift + delta(1) !+ (i + 0.5_dp) * space 
+                        !pos_tent(2) = shift + delta(2) !+ (j + 0.5_dp) * space 
+                        !pos_tent(3) = shift + delta(3) !+ (k + 0.5_dp) * space 
                         
                         overlap = .false.
                         do l = 1, p-1

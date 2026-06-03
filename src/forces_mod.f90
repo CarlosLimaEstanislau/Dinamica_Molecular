@@ -16,7 +16,7 @@
                 real(dp), dimension(3) :: rij
                 integer :: i, j, n, k
                 real(dp) :: rc, rc2, sigma, a1, a2, r2, r
-                real(dp) :: Bi, Bj, A, surf_dist
+                real(dp) :: Bi, Bj, A, surf_dist, sigmaLJ
                 real(dp) :: expfac, force_scalar_dlvo, pot_dlvo
                 real(dp) :: sr2, sr6, sr12, force_scalar_wca, pot_wca
 
@@ -40,6 +40,8 @@
                         a2 = radius(j)
                         
                         surf_dist = r - sigma
+
+                        sigmaLJ = sigma / 2.0_dp**(1.0_dp/6.0_dp)
                         
                         if (surf_dist > 0.0_dp .and. surf_dist <= r_cut_dlvo) then
                             Bi = exp(kappa * a1) / (1.0_dp + kappa * a1)
@@ -55,8 +57,8 @@
                             force(:,j) = force(:,j) - force_scalar_dlvo * rij
                         end if
 
-                        if (r < sigma) then
-                            sr2 = (sigma * sigma) / r2
+                        if (surf_dist <= 0.0_dp) then
+                            sr2 = (sigmaLJ * sigmaLJ) / r2
                             sr6 = sr2 * sr2 * sr2
                             sr12 = sr6 * sr6
                             
@@ -89,9 +91,9 @@
                 r_list2 = r_list * r_list
 
                 k = 0
+                point(1) = 1
 
                 do i = 1, n - 1
-                    point(i) = k + 1
 
                     do j = i + 1, n
                         rij = positions(:,i) - positions(:,j)
@@ -106,9 +108,8 @@
                             list(k) = j
                         end if
                     end do
+                    point(i+1) = k + 1
                 end do
-
-                point(n)   = k + 1
                 point(n+1) = k + 1
 
                 r_save = positions

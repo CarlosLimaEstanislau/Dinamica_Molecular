@@ -1,11 +1,11 @@
 &config_nml
     num_particles = 600
-    max_steps = 10000
+    max_steps = 100000
     rho = 0.1
     frac_particles = 0.5
     frac_charges = 0.5
     radius1 = 0.53
     radius2 = 0.25
-    Z = 70
+    Z = 300
     gamma = 2.0
 /

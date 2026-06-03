@@ -15,8 +15,8 @@ module var_mod
 
     real(dp), parameter :: kappa = 2.79_dp      ! Screening lengh (micrometro^-1)
     real(dp), parameter :: bjerrum = 0.00072_dp ! Bjerrum lenght (micrometro)
-    real(dp), parameter :: eps = 50.0_dp        ! WCA strength (KbT)
-    real(dp), parameter :: dt = 0.001_dp        ! Integration step
+    real(dp), parameter :: eps = 800.0_dp        ! WCA strength (KbT)
+    real(dp), parameter :: dt = 0.00025_dp        ! Integration step
     real(dp), parameter :: pi = acos(-1.0_dp)   ! pi constant
     real(dp), parameter :: a0 = 0.53_dp         ! Reference radii (micrometro)
 
@@ -111,7 +111,7 @@ module var_mod
             
             part%charges = part%Z
             if (num_charges < sys%num_particles) then
-                part%charges(num_charges+1:) = -part%Z
+                part%charges(num_charges + 1:) = -part%Z
             end if
 
             call shuffle_array(part%radius, part%charges)
@@ -135,7 +135,7 @@ module var_mod
             
             sys%max_radius = maxval(part%radius)
             sys%skin = 0.2_dp * sys%r_cut_dlvo
-            sys%r_list = sys%r_cut_dlvo + sys%skin + 2.0_dp * sys%max_radius
+            sys%r_list = sys%skin + sys%r_cut_dlvo + 2.0_dp * sys%max_radius
             sys%max_pairs = sys%num_particles * (sys%num_particles - 1) / 2
 
             allocate(sys%list(sys%max_pairs))

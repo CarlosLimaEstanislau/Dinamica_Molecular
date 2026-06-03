@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 # ===============================
 # CONFIGURAÇÃO
 # ===============================
@@ -125,5 +123,4 @@ for prog in "${PROGRAMAS[@]}"; do
     (cd "$BUILD_DIR" && ./"$nome_exec" "$MASTER_DIR")
 done
 
-echo
 echo -e "\e[1;33mEnd of simulation!\e[0m"
