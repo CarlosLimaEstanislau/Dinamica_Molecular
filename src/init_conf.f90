@@ -169,7 +169,7 @@ program init_conf
         character(len=*) :: outdir
     
         write(filepath,'(A,"/config/final_config_N",I0,"_Z_",F5.1,"_rho_",F0.3,".dat")') &
-         trim(outdir), sys%num_particles, part%Z, sys%rho
+         trim(outdir), sys%num_particles, part%Z1, sys%rho
 
 
         open(newunit = fdi, file = filepath, status = 'old', action = 'read', iostat = ioerr)

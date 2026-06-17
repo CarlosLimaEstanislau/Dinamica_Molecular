@@ -2,10 +2,10 @@
     num_particles = 600
     max_steps = 100000
     rho = 0.1
-    frac_particles = 0.5
-    frac_charges = 0.5
+    frac_particles = 0.1
     radius1 = 0.53
     radius2 = 0.25
-    Z = 300
+    Z1 = 600
+    Z2 = -50
     gamma = 2.0
 /

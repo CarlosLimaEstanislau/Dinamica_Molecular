@@ -20,21 +20,21 @@ contains
         integer :: unit, ios
 
         integer  :: num_particles, max_steps
-        real(dp) :: rho, frac_particles, frac_charges
-        real(dp) :: radius1, radius2, Z, gamma
+        real(dp) :: rho, frac_particles
+        real(dp) :: radius1, radius2, Z1,Z2, gamma
 
         namelist /config_nml/ num_particles, max_steps, rho, frac_particles, &
-                              frac_charges, radius1, radius2, Z, gamma
+                             radius1, radius2, Z1,Z2, gamma
 
         ! Defaults
         num_particles  = 100
         max_steps      = 1000000
         rho            = 0.01_dp
         frac_particles = 1.0_dp
-        frac_charges   = 1.0_dp
         radius1        = 0.5_dp
         radius2        = 0.0_dp
-        Z              = 100.0_dp
+        Z1                 = 100.0_dp
+        Z2                 = 1000.0_dp 
         gamma = 1.0_dp
 
         open(newunit=unit, file=params%file_nml, status='old', action='read', iostat=ios)
@@ -67,9 +67,6 @@ contains
         if (frac_particles < 0.0_dp .or. frac_particles > 1.0_dp) then
             error stop 'read_nml: frac_particles deve estar entre 0 e 1'
         end if
-        if (frac_charges < 0.0_dp .or. frac_charges > 1.0_dp) then
-            error stop 'read_nml: frac_charges deve estar entre 0 e 1'
-        end if
         if (radius1 < 0.0_dp .or. radius2 < 0.0_dp) then
             error stop 'read_nml: raios devem ser >= 0'
         end if
@@ -77,12 +74,12 @@ contains
         sys%num_particles  = num_particles
         sys%rho            = rho
         sys%frac_particles = frac_particles
-        sys%frac_charges   = frac_charges
         sys%gamma          = gamma
 
         part%radius1 = radius1
         part%radius2 = radius2
-        part%Z       = Z
+        part%Z1       = Z1
+        part%Z2       = Z2
 
 
         params%max_steps = max_steps
@@ -279,7 +276,7 @@ contains
         if (.not. allocated(part%charges))   error stop 'write_pdb: charges nao alocado'
 
         write(filepath, '(A,"/pdb/traj_rho_",F4.2,"_Z_",F6.1,"_N_",I6,".pdb")') &
-            trim(outdir), sys%rho, part%Z, sys%num_particles
+            trim(outdir), sys%rho, part%Z1, sys%num_particles
 
         open(newunit=fdi, file=filepath, status='unknown', action='write', &
              position='append', iostat=ios)
@@ -291,9 +288,9 @@ contains
         write(fdi,'(A6,3F9.3,3F7.2)') 'CRYST1', sys%box, sys%box, sys%box, 90.0, 90.0, 90.0
 
         do i = 1, sys%num_particles
-            if (part%charges(i) == -part%Z) then
+            if (part%charges(i) == part%Z1) then
                 idx = 1
-            else if (part%charges(i) == part%Z) then
+            else if (part%charges(i) == part%Z2) then
                 idx = 2
             else
                 close(fdi)
@@ -334,7 +331,7 @@ contains
         datetime = date//' '//time
 
         write(filepath, '(A,"/log/log_rho_",F4.2,"_Z_",F4.1,"_N_",I6,".txt")') &
-            trim(outdir), sys%rho, part%Z, sys%num_particles
+            trim(outdir), sys%rho, part%Z1, sys%num_particles
 
         open(newunit=fdi, file=filepath, status='unknown', action='write', &
              position='append', iostat=ios)
@@ -371,7 +368,7 @@ contains
         if (sys%box <= 0.0_dp) error stop 'write_final_config: box deve ser positivo'
 
         write(filepath, '(A,"/config/final_config_N",I0,"_Z_",F5.1,"_rho_",F5.3,".dat")') &
-             trim(outdir), sys%num_particles, part%Z, sys%rho
+             trim(outdir), sys%num_particles, part%Z1, sys%rho
 
         open(newunit=fdi, file=filepath, status='replace', action='write', iostat=ios)
         if (ios /= 0) then

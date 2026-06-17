@@ -30,7 +30,7 @@ module var_mod
         real(dp) :: skin, r_cut_dlvo, r_list
         integer :: n, max_pairs
         integer :: num_particles
-        real(dp):: rho, frac_particles,frac_charges
+        real(dp):: rho, frac_particles
         real(dp):: kappa, bjerrum, max_radius
         real(dp):: gamma                                                         
     end type system_g
@@ -39,7 +39,7 @@ module var_mod
         real(dp), dimension(:,:) , allocatable:: positions, velocities !(3,n)
         real(dp), dimension(:), allocatable :: masses, charges, radius !(n)
         real(dp) :: potential
-        real(dp):: Z, radius1, radius2
+        real(dp):: Z1,Z2, radius1, radius2
     end type particles 
 
     type :: parameters
@@ -82,7 +82,7 @@ module var_mod
             implicit none
             type(particles), intent(inout):: part
             type(system_g), intent(in):: sys
-            integer:: num_radius, num_charges
+            integer:: fraction
 
             part%positions = 0.0_dp
             part%velocities = 0.0_dp
@@ -93,25 +93,19 @@ module var_mod
             part%masses = 1.0_dp
 
             if (sys%frac_particles .le. 1.0_dp .and. sys%frac_particles .ge. 0.0_dp) then 
-                num_radius  = nint(sys%frac_particles * sys%num_particles)
+                fraction  = nint(sys%frac_particles * sys%num_particles)
             else 
                 error stop "Erro: Atribua um valor para fração de particulas entre 0 e 1 !"
             end if
-            
-            if (sys%frac_charges .le. 1.0_dp .and. sys%frac_charges .ge. 0.0_dp) then 
-                num_charges = nint(sys%frac_charges * sys%num_particles)
-            else 
-                error stop "Erro: Atribua um valor para fração de cargas entre 0 e 1!"
-            end if
 
             part%radius = part%radius1/a0
-            if (num_radius < sys%num_particles) then
-                part%radius(num_radius+1:) = part%radius2/a0
+            if (fraction < sys%num_particles) then
+                part%radius(fraction + 1:) = part%radius2/a0
             end if
             
-            part%charges = part%Z
-            if (num_charges < sys%num_particles) then
-                part%charges(num_charges + 1:) = -part%Z
+            part%charges = part%Z1
+            if (fraction < sys%num_particles) then
+                part%charges(fraction + 1:) = part%Z2
             end if
 
             call shuffle_array(part%radius, part%charges)
