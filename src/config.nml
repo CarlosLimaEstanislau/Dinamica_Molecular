@@ -1,5 +1,5 @@
 &config_nml
-    sim_filename = "simulation"
+    sim_filename = 'sim1'
     num_particles = 600
     max_steps = 100000
     rho = 0.1
