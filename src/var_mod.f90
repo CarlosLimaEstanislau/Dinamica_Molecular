@@ -23,8 +23,8 @@ module var_mod
     type :: system_g
         real(dp) :: box, total_energy, temp_target
         integer  :: g
-        real(dp) :: pot_DLVO, pot_WCA, total_potential
-        real(dp), dimension(:,:), allocatable :: total_forces, force_DLVO, force_WCA !(3,n)
+        real(dp) :: total_potential
+        real(dp), dimension(:,:), allocatable :: total_forces !(3,n)
         real(dp), allocatable :: r_save(:,:)
         integer, allocatable  :: list(:), point(:)
         real(dp) :: skin, r_cut_dlvo, r_list
@@ -43,7 +43,8 @@ module var_mod
     end type particles 
 
     type :: parameters
-        character(len=256):: init_filename, part_filename, file_nml, outdir
+        character(len=256):: init_filename, part_filename, file_nml, &
+                             outdir, sim_filename
         integer :: max_steps
         logical :: is_first
         logical :: interrupt
@@ -59,6 +60,7 @@ module var_mod
             params%init_filename = 'init_conf.dat'
             params%part_filename = 'particles.part'
             params%file_nml = 'config.nml'
+            params%sim_filename = ' '
             params%is_first = .true.
             params%interrupt = .false.
             params%exists = .false.
@@ -133,7 +135,7 @@ module var_mod
             sys%max_pairs = sys%num_particles * (sys%num_particles - 1) / 2
 
             allocate(sys%list(sys%max_pairs))
-            allocate(sys%point(sys%num_particles +1))
+            allocate(sys%point(sys%num_particles + 1))
             allocate(sys%r_save(3,sys%num_particles ))
 
         end subroutine init_verlet_list
@@ -142,23 +144,17 @@ module var_mod
             implicit none
             type(system_g), intent(inout) :: sys
 
-            sys%g = 3*(sys%num_particles-1)
+            sys%g = 3*sys%num_particles
             sys%total_energy = 0.0_dp
             sys%temp_target = 1.0_dp
-            sys%pot_WCA = 0.0_dp
-            sys%pot_DLVO = 0.0_dp
             sys%total_potential = 0.0_dp
             sys%kappa = kappa*a0 
             sys%bjerrum = bjerrum/a0
             sys%r_cut_dlvo = 5.0_dp / sys%kappa
 
             allocate(sys%total_forces(3, sys%num_particles))
-            allocate(sys%force_DLVO(3, sys%num_particles))
-            allocate(sys%force_WCA(3, sys%num_particles))
 
             sys%total_forces = 0.0_dp
-            sys%force_DLVO = 0.0_dp
-            sys%force_WCA = 0.0_dp
         end subroutine
 
         subroutine end_system(sys)
@@ -166,7 +162,8 @@ module var_mod
             type(system_g), intent(inout)::sys
 
             if(allocated(sys%total_forces)) deallocate(sys%total_forces)
-            if(allocated(sys%force_DLVO)) deallocate(sys%force_DLVO)
-            if(allocated(sys%force_WCA)) deallocate(sys%force_WCA)
+            if(allocated(sys%list)) deallocate(sys%list)
+            if(allocated(sys%point)) deallocate(sys%point)
+            if(allocated(sys%r_save)) deallocate(sys%r_save)
         end subroutine
 end module

@@ -3,7 +3,7 @@ module ui_mod
     use var_mod
     implicit none
 
-    integer, parameter :: UI_DATA_LINE = 21
+    integer, parameter :: UI_DATA_LINE = 22
 
     contains
 
@@ -26,9 +26,10 @@ module ui_mod
         write(*,'(A,I10)')       ' Total steps:        ', params%max_steps
         write(*,'(A,F10.6)')     ' Time step (dt):     ', dt_event
         write(*,'(A,F10.4)')     ' Target temperature: ', sys%temp_target
-        write(*,'(A,F10.4)')     ' Frac. radii type A: ', sys%frac_particles
-        !write(*,'(A,F10.4)')     ' Frac. charged:      ', sys%frac_charges
-       ! write(*,'(A,F10.4)')     ' Charge magnitude Z: ', part%Z
+        write(*,'(A,F10.4)')     ' Fraction of particles: ', sys%frac_particles
+        write(*,'(A,F10.4,A,F10.4)')' Charges      A:   ',part%Z1, ", B: ", part%Z2
+        write(*,'(A,F10.4,A,F10.4)')' Radius:      A:   ', part%radius1, ", B: ", part%radius2
+        write(*,'(A,F10.4)')     ' List length:         ', sys%r_list
         write(*,'(A,F10.4)')     ' Langevin gamma:     ', sys%gamma
 
         print *

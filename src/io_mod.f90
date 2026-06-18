@@ -22,11 +22,13 @@ contains
         integer  :: num_particles, max_steps
         real(dp) :: rho, frac_particles
         real(dp) :: radius1, radius2, Z1,Z2, gamma
+        character(len=256)::sim_filename
 
-        namelist /config_nml/ num_particles, max_steps, rho, frac_particles, &
-                             radius1, radius2, Z1,Z2, gamma
+        namelist /config_nml/ sim_filename, num_particles, max_steps, rho, frac_particles, &
+                             radius1, radius2, Z1, Z2, gamma
 
         ! Defaults
+        sim_filename = "simulation"
         num_particles  = 100
         max_steps      = 1000000
         rho            = 0.01_dp
@@ -44,31 +46,35 @@ contains
         end if
 
         read(unit, nml=config_nml, iostat=ios)
-
-        if (num_particles < 2) error stop "read_nml: num_particles deve ser >= 2"
-        if (radius1 <= 0.0_dp) error stop "read_nml: radius1 deve ser > 0"
-        if (radius2 <= 0.0_dp) error stop "read_nml: radius2 deve ser > 0"
-
         if (ios /= 0) then
             close(unit)
             write(*,*) 'Erro ao ler namelist: ', trim(params%file_nml), ' IOSTAT=', ios
             error stop 'read_nml: falha ao ler arquivo'
         end if
-
+        
         close(unit, iostat=ios)
+        
         if (ios /= 0) then
             write(*,*) 'Aviso: erro ao fechar namelist: ', trim(params%file_nml), ' IOSTAT=', ios
-        end if
+        end if        
 
-        ! Validação
-        if (num_particles <= 0) error stop 'read_nml: num_particles deve ser > 0'
+        !Validação        
+        if (num_particles < 2) error stop "read_nml: num_particles deve ser >= 2"
+        if (radius1 <= 0.0_dp) error stop "read_nml: radius1 deve ser > 0"
+        if (radius2 <= 0.0_dp .and. frac_particles < 1.0_dp) error stop "read_nml: radius2 deve ser > 0"
+
         if (max_steps <= 0)     error stop 'read_nml: max_steps deve ser > 0'
         if (rho <= 0.0_dp)      error stop 'read_nml: rho deve ser > 0'
+        
         if (frac_particles < 0.0_dp .or. frac_particles > 1.0_dp) then
             error stop 'read_nml: frac_particles deve estar entre 0 e 1'
         end if
-        if (radius1 < 0.0_dp .or. radius2 < 0.0_dp) then
-            error stop 'read_nml: raios devem ser >= 0'
+        
+        if(len_trim(sim_filename) .eq. 0) then
+            print*, "Warning: Arquivo de simulação com o nome vazio, usando valor padrão!"
+            params%sim_filename = "simulation"
+        else
+            params%sim_filename = sim_filename
         end if
 
         sys%num_particles  = num_particles
@@ -80,7 +86,6 @@ contains
         part%radius2 = radius2
         part%Z1       = Z1
         part%Z2       = Z2
-
 
         params%max_steps = max_steps
     end subroutine read_nml
@@ -260,11 +265,11 @@ contains
         end if
     end subroutine read_part_file
 
-    subroutine write_pdb(sys, part, outdir)
+    subroutine write_pdb(sys, part, sim_filename, outdir)
         implicit none
         type(system_g),  intent(in) :: sys
         type(particles), intent(in) :: part
-        character(len=*), intent(in):: outdir
+        character(len=*), intent(in):: outdir, sim_filename
 
         integer :: i, fdi, ios, idx, ir, ic
         real(dp), parameter :: tol = 1.0e-10_dp
@@ -275,8 +280,7 @@ contains
         if (.not. allocated(part%radius))    error stop 'write_pdb: radius nao alocado'
         if (.not. allocated(part%charges))   error stop 'write_pdb: charges nao alocado'
 
-        write(filepath, '(A,"/pdb/traj_rho_",F4.2,"_Z_",F6.1,"_N_",I6,".pdb")') &
-            trim(outdir), sys%rho, part%Z1, sys%num_particles
+        filepath = trim(outdir) // "/pdb/" // trim(sim_filename) // ".pdb"
 
         open(newunit=fdi, file=filepath, status='unknown', action='write', &
              position='append', iostat=ios)
@@ -288,9 +292,9 @@ contains
         write(fdi,'(A6,3F9.3,3F7.2)') 'CRYST1', sys%box, sys%box, sys%box, 90.0, 90.0, 90.0
 
         do i = 1, sys%num_particles
-            if (part%charges(i) == part%Z1) then
+            if (part%charges(i) == part%Z1 .and. part%radius(i) == part%radius1/a0) then
                 idx = 1
-            else if (part%charges(i) == part%Z2) then
+            else if (part%charges(i) == part%Z2 .and. part%radius(i) == part%radius2/a0) then
                 idx = 2
             else
                 close(fdi)
@@ -312,11 +316,11 @@ contains
         end if
     end subroutine write_pdb
 
-    subroutine write_log(sys, part, outdir, step, temp, is_first)
+    subroutine write_log(sys, part, sim_filename, outdir, step, temp, is_first)
         implicit none
         type(system_g),   intent(in) :: sys
         type(particles),  intent(in) :: part
-        character(len=*), intent(in) :: outdir
+        character(len=*), intent(in) :: outdir, sim_filename
         integer,          intent(in) :: step
         logical,          intent(in) :: is_first
         real(dp),         intent(in) :: temp
@@ -330,8 +334,7 @@ contains
         call date_and_time(date=date, time=time)
         datetime = date//' '//time
 
-        write(filepath, '(A,"/log/log_rho_",F4.2,"_Z_",F4.1,"_N_",I6,".txt")') &
-            trim(outdir), sys%rho, part%Z1, sys%num_particles
+        filepath = trim(outdir) // "/log/" // trim(sim_filename) // ".log"
 
         open(newunit=fdi, file=filepath, status='unknown', action='write', &
              position='append', iostat=ios)
@@ -354,11 +357,11 @@ contains
         end if
     end subroutine write_log
 
-    subroutine write_final_config(sys, part, outdir)
+    subroutine write_final_config(sys, part, sim_filename, outdir)
         implicit none
         type(system_g),  intent(in) :: sys
         type(particles), intent(in) :: part
-        character(len=*), intent(in) :: outdir
+        character(len=*), intent(in) :: outdir, sim_filename
 
         integer :: fdi, ios, i
         character(len=512) :: filepath
@@ -367,8 +370,7 @@ contains
         if (.not. allocated(part%velocities)) error stop 'write_final_config: velocities nao alocado'
         if (sys%box <= 0.0_dp) error stop 'write_final_config: box deve ser positivo'
 
-        write(filepath, '(A,"/config/final_config_N",I0,"_Z_",F5.1,"_rho_",F5.3,".dat")') &
-             trim(outdir), sys%num_particles, part%Z1, sys%rho
+        filepath = trim(outdir) // "/config/" // trim(sim_filename) // ".cfg"
 
         open(newunit=fdi, file=filepath, status='replace', action='write', iostat=ios)
         if (ios /= 0) then

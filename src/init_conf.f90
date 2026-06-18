@@ -21,7 +21,7 @@ program init_conf
 
 
     !if(params%exists) then
-       ! call continue_config(sys, part, params%outdir)
+       ! call continue_config(sys, part, , params%sim_filename ,params%outdir)
     !else
         call new_config(part, sys, params)
     !end if
@@ -31,7 +31,7 @@ program init_conf
 
     contains
 
-    subroutine lattice_positions(pos, box, n, radii)
+    subroutine positions_config(pos, box, n, radii)
         implicit none
 
         real(dp), dimension(:,:), intent(out) :: pos
@@ -96,7 +96,7 @@ program init_conf
             end do
         end do
 
-    end subroutine lattice_positions
+    end subroutine positions_config
     
     subroutine rand_velocities(vel, sig, n)
         real(dp), intent(in) :: sig
@@ -143,8 +143,7 @@ program init_conf
         type(system_g),   intent(inout) :: sys
         type(parameters), intent(in)    :: params  
         
-        real(dp) :: sigma, Vt, a0
-        integer  :: fdi, ioerr, i, n
+        real(dp) :: sigma, Vt
 
         Vt = (4.0_dp*pi/3.0_dp) * sum((part%radius)**3)
         
@@ -152,24 +151,23 @@ program init_conf
         
         sigma = sqrt(sys%temp_target)
 
-        call lattice_positions(part%positions, sys%box, sys%num_particles, part%radius)
+        call positions_config(part%positions, sys%box, sys%num_particles, part%radius)
         call rand_velocities(part%velocities, sigma, sys%num_particles)
         
         call write_config(part, sys, params%init_filename)
         call write_part_file(part, sys, params%part_filename)
     end subroutine new_config
 
-    subroutine continue_config(sys, part, outdir)
+    subroutine continue_config(sys, part, sim_filename, outdir)
     implicit none
         type(system_g), intent(inout)  :: sys
         type(particles), intent(inout) :: part
-
+        character(len=*), intent(in) :: outdir, sim_filename
+        
         integer :: fdi, ioerr, i
-        character(len=256) :: filepath
-        character(len=*) :: outdir
+        character(len=256) :: filepath   
     
-        write(filepath,'(A,"/config/final_config_N",I0,"_Z_",F5.1,"_rho_",F0.3,".dat")') &
-         trim(outdir), sys%num_particles, part%Z1, sys%rho
+        filepath = trim(outdir) // "/config/" // trim(sim_filename) // ".cfg"
 
 
         open(newunit = fdi, file = filepath, status = 'old', action = 'read', iostat = ioerr)
