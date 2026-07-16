@@ -1,12 +1,12 @@
 &config_nml
-    sim_filename = 'sim1'
+    sim_filename = 'sim13'
     num_particles = 600
     max_steps = 100000
     rho = 0.1
-    frac_particles = 0.1
-    radius1 = 0.53
-    radius2 = 0.53
-    Z1 = 600
-    Z2 = -50
+    frac_particles = 0.5
+    radius1 = 1.0
+    radius2 = 1.0
+    Z1 = 800
+    Z2 = -800
     gamma = 2.0
 /

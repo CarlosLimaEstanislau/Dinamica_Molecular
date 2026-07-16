@@ -39,7 +39,7 @@ module var_mod
         real(dp), dimension(:,:) , allocatable:: positions, velocities !(3,n)
         real(dp), dimension(:), allocatable :: masses, charges, radius !(n)
         real(dp) :: potential
-        real(dp):: Z1,Z2, radius1, radius2
+        real(dp):: Z1,Z2, radius1, radius2 !Leia se Z1 e Z2 como P1 e P2
     end type particles 
 
     type :: parameters
@@ -130,7 +130,7 @@ module var_mod
             type(particles), intent(in)   :: part
             
             sys%max_radius = maxval(part%radius)
-            sys%skin = 0.2_dp * sys%r_cut_dlvo
+            sys%skin = 0.3_dp * sys%r_cut_dlvo
             sys%r_list = sys%skin + sys%r_cut_dlvo + 2.0_dp * sys%max_radius
             sys%max_pairs = sys%num_particles * (sys%num_particles - 1) / 2
 
