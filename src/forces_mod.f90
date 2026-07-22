@@ -15,7 +15,7 @@
 
                 real(dp), dimension(3) :: rij
                 integer :: i, j, n, k
-                real(dp) :: rc, rc2, sigma, a1, a2, r2, r
+                real(dp) :: sigma, a1, a2, r2, r
                 real(dp) :: Bi, Bj, A, surf_dist, sigmaLJ
                 real(dp) :: expfac, force_scalar_dlvo, pot_dlvo
                 real(dp) :: sr2, sr6, sr12, force_scalar_wca, pot_wca

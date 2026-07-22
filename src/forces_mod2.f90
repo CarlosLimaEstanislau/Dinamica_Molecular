@@ -13,10 +13,10 @@
                 real(dp), intent(out) :: potential
                 real(dp), dimension(:,:), intent(out) :: force
 
-                real(dp), dimension(3) :: rij, rij_hat
-                integer :: i, j, n, k
-                real(dp) :: rc, rc2, sigma, a1, a2, r2, r
-                real(dp) :: dbeta_dr, dgamma_dr,dalpha_dr, surf_dist, sigmaLJ, gamma, beta, alpha
+                real(dp), dimension(3) :: rij
+                integer  :: i, j, n, k
+                real(dp) :: sigma, a1, a2, r2, r
+                real(dp) :: dbeta_dr, dgamma_dr, dgamma_dz, dalpha_dr, surf_dist, sigmaLJ, gamma, beta, alpha
                 real(dp) :: expfac, du_dx, du_dy, du_dz, du_dr, u
                 real(dp) :: sr2, sr6, sr12, force_scalar_wca, pot_wca
 
@@ -34,8 +34,7 @@
                         rij = rij - box * nint(rij / box)
                         r2 = dot_product(rij, rij)
                         r = sqrt(r2)
-                        rij_hat = rij/r
-
+                        
                         sigma = radius(i) + radius(j)
 
                         surf_dist = r - sigma
@@ -46,24 +45,26 @@
 
                             alpha = p_tiu(i)*p_tiu(j)*0.5_dp*cos(delta)*exp(-kappa*r)/(r/bjl)**3
 
-                            beta = -(kappa*r + 1) + kappa*kappa*r*r + 3.0_dp*(kappa*r +1)
+                            beta = -(kappa*r + 1.0_dp)
 
-                            gamma = (rij(3)*rij(3))/(r*r)
+                            gamma = (kappa*kappa*r2 + 3.0_dp*(kappa*r +  1))*(rij(3)*rij(3))/r2
 
                             dalpha_dr = -alpha * (kappa + 3.0_dp/r)
 
-                            dbeta_dr  = 2.0_dp*(kappa*kappa*r + kappa)
+                            dbeta_dr  = -kappa
 
-                            dgamma_dr = -2.0_dp*(gamma/r) 
+                            dgamma_dr = -(3.0_dp*kappa + 2.0_dp/r)*(rij(3)*rij(3)/r2)
+                            
+                            dgamma_dz = (2.0_dp*kappa*kappa*r + 3.0_dp*kappa)*(rij(3)*rij(3)/r2) &
+                                        - 2.0_dp*(kappa*kappa*r2 + 3.0_dp*(kappa*r + 1))*((rij(1)*rij(1) + rij(2)*rij(2))/(r2*r))
 
-                            du_dr = dalpha_dr*beta*gamma + alpha*gamma*dbeta_dr + alpha*beta*dgamma_dr
+                            du_dr = dalpha_dr*(beta + gamma) + alpha*(dbeta_dr + dgamma_dr)
 
                             du_dx = du_dr*(rij(1)/r)
                             du_dy = du_dr*(rij(2)/r)
-                            du_dz = (du_dr + 2.0_dp*alpha*beta*(1.0_dp-gamma)/r)*(rij(3)/r)
+                            du_dz = (du_dr + alpha*dgamma_dz)*(rij(3)/r)
 
-
-                            u = alpha*beta*gamma
+                            u = alpha*(beta + gamma)
 
                             force(1,i) = force(1,i) - du_dx
                             force(2,i) = force(2,i) - du_dy
